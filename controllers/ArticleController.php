@@ -4,8 +4,13 @@ require(__DIR__ . "/../models/Article.php");
 require(__DIR__ . "/../connection/connection.php");
 require(__DIR__ . "/../services/ArticleService.php");
 require(__DIR__ . "/../services/ResponseService.php");
+require(__DIR__ . "/../controllers/BaseController.php");
 
-class ArticleController{
+class ArticleController extends BaseController {
+
+    public function __construct() {
+        parent::__construct();
+    }
     
     public function getArticle($id) {
         global $mysqli;
@@ -93,6 +98,45 @@ class ArticleController{
 
     public function deleteAllArticles(){
         die("Deleting...");
+    }
+
+    public function getArticlesByCategoryId($categoryId) {
+        try {
+            $query = "SELECT * FROM articles WHERE category_id = ?";
+            $stmt = $this->mysqli->prepare($query);
+            $stmt->bind_param("i", $categoryId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $articles = [];
+            while ($row = $result->fetch_assoc()) {
+                $articles[] = $row;
+            }
+            if (empty($articles)) {
+                echo ResponseService::error_response("No articles found for this category", 404);
+                return;
+            }
+            echo ResponseService::success_response($articles);
+        } catch (Exception $e) {
+            $this->handleException($e);
+        }
+    }
+    
+    public function getCategoryOfArticle($articleId) {
+        try {
+            $query = "SELECT c.* FROM categories c JOIN articles a ON a.category_id = c.id WHERE a.id = ?";
+            $stmt = $this->mysqli->prepare($query);
+            $stmt->bind_param("i", $articleId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $category = $result->fetch_assoc();
+            if (!$category) {
+                echo ResponseService::error_response("Category not found for this article", 404);
+                return;
+            }
+            echo ResponseService::success_response($category);
+        } catch (Exception $e) {
+            $this->handleException($e)
+        }
     }
 }
 

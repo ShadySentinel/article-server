@@ -1,11 +1,12 @@
 <?php
+
 require(__DIR__ . "/../controllers/ArticleController.php");
 require(__DIR__ . "/../controllers/CategoryController.php");
 
 $articleController = new ArticleController();
 $categoryController = new CategoryController();
 
-
+//For articles.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (!isset($_GET['id']) && $_SERVER['REQUEST_URI'] === '/api/articles') {
         echo $articleController->getAllArticles();
@@ -30,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $_SERVER['REQUEST_URI'] === '/api
     echo $articleController->deleteAllArticles();
 }
 
-
+//For categories.
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (!isset($_GET['id']) && $_SERVER['REQUEST_URI'] === '/api/categories') {
         echo $categoryController->getAllCategories();
@@ -53,4 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && preg_match('#/api/categories/(\d+
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $_SERVER['REQUEST_URI'] === '/api/categories') {
     echo $categoryController->deleteAllCategories();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && preg_match('#^/api/articles/category/(\d+)$#', $_SERVER['REQUEST_URI'], $matches)) {
+    echo $articleController->getArticlesByCategoryId($matches[1]);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && preg_match('#^/api/articles/(\d+)/category$#', $_SERVER['REQUEST_URI'], $matches)) {
+    echo $articleController->getCategoryOfArticle($matches[1]);
 }
