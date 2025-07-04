@@ -7,12 +7,26 @@ require(__DIR__ . "/../services/ResponseService.php");
 
 class ArticleController{
     
+    public function getArticle($id) {
+        global $mysqli;
+        try {
+            $article = Article::find($mysqli, $id);
+            if (!$article) {
+                echo ResponseService::error_response("Article not found", 404);
+                return;
+            }
+            echo ResponseService::success_response($article->toArray());
+        } catch (Exception $e) {
+            echo ResponseService::error_response("Failed to fetch article: " . $e->getMessage(), 500);
+        }
+    }
+
     public function getAllArticles(){
         global $mysqli;
 
         if(!isset($_GET["id"])){
             $articles = Article::all($mysqli);
-            $articles_array = ArticleService::articlesToArray($articles); 
+            $articles_array = ArticleService::articlesToArray($articles);
             echo ResponseService::success_response($articles_array);
             return;
         }
@@ -23,14 +37,50 @@ class ArticleController{
         return;
     }
 
+    public function deleteArticle($id) {
+        global $mysqli;
+        try {
+            $article = Article::find($mysqli, $id);
+            if (!$article) {
+                echo ResponseService::error_response("Article not found", 404);
+                return;
+            }
+            $article->delete();
+            echo ResponseService::success_response(["message" => "Article deleted"]);
+        } catch (Exception $e) {
+            echo ResponseService::error_response("Failed to delete article: " . $e->getMessage(), 500);
+        }
+    }
+
     public function deleteAllArticles(){
         die("Deleting...");
     }
+
+    public function addArticle() {
+        global $mysqli;
+        try {
+            $data = json_decode(file_get_contents("php://input"), true);
+            if (!isset($data['name']) || !isset($data['author']) || !isset($data['description']) || 
+                empty($data['name']) || empty($data['author']) || empty($data['description'])) {
+                echo ResponseService::error_response("Name, author, and description are required", 400);
+                return;
+            }
+            $article = new Article($mysqli);
+            $article->name = $mysqli->real_escape_string($data['name']);
+            $article->author = $mysqli->real_escape_string($data['author']);
+            $article->description = $mysqli->real_escape_string($data['description']);
+            $article->save();
+            echo ResponseService::success_response($article->toArray(), 201);
+        } catch (Exception $e) {
+            echo ResponseService::error_response("Failed to add article: " . $e->getMessage(), 500);
+        }
+    }
+
+    
 }
 
 //To-Do:
-
-//1- Try/Catch in controllers ONLY!!! 
+ 
 //2- Find a way to remove the hard coded response code (from ResponseService.php)
 //3- Include the routes file (api.php) in the (index.php) -- In other words, seperate the routing from the index (which is the engine)
 //4- Create a BaseController and clean some imports 
